@@ -2,6 +2,7 @@ import Qconfig
 import sys
 import json
 import os
+import time
 from datetime import datetime
 from qiskit import QuantumProgram, QuantumCircuit
 from qiskit.tools.visualization import plot_histogram, plot_circuit
@@ -45,6 +46,11 @@ def execute(qp, circuits=None, backend="local_qiskit_simulator", shots=1024, sav
         circuits = list(qp.get_circuit_names())
     result = qp.execute(circuits, backend=backend,
                         shots=shots, timeout=1200, wait=10)
+    time.sleep(1)
+    print(result)
+    #while str(result) == "ERROR":
+     #   print(result)
+      #  time.sleep(0.1)
     if sav == 1 and not is_simulation(backend):
         save(result, backend, info=info)
     elif sav == 2:
