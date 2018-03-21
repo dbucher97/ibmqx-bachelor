@@ -14,6 +14,7 @@ def is_simulation(backend):
     else:
         return True
 
+
 def setup_circuit(qp, num_reg, name=None):
     # Adds circiut to existing program.
     # Automatic Naming
@@ -48,9 +49,6 @@ def execute(qp, circuits=None, backend="local_qiskit_simulator", shots=1024, sav
                         shots=shots, timeout=1200, wait=10)
     time.sleep(1)
     print(result)
-    #while str(result) == "ERROR":
-     #   print(result)
-      #  time.sleep(0.1)
     if sav == 1 and not is_simulation(backend):
         save(result, backend, info=info)
     elif sav == 2:
@@ -89,6 +87,31 @@ def save(result, backend, circuits=None, info=""):
             "<+>", datetime.now().strftime('%Y-%m-%d_%H:%M:%S'))
         with open(path, "w") as f:
             json.dump({"job_id": jid, "info": info, "data": data, "qasm": qasm}, f, indent=4)
+
+
+def load_file(filename):
+    with open(filename, "r") as f:
+        d = json.load(f)
+    return d
+
+
+def load(name, filename=None, info=None, h=1):
+    if filename==None:
+        d = sorted(os.listdir(name), reverse=True)
+        d = list(map(lambda s: name+"/"+s, d))
+        cur = ""
+        c = 0
+        for e in d:
+            c+=1
+            cur = e
+            x = load_file(e)
+            if info:
+                if x["info"] != info:
+                    c-=1
+            if c == h:
+                break
+        filename = cur
+    return load_file(filename)
 
 
 def visualize(result, circuits=None, ntk=False):

@@ -37,5 +37,23 @@ def print_mapping():
     for k, v in mapping.items():
         print(k + "->" + v)
 
+def load_mapping():
+    mapping = {}
+    with open("qbit_mapping.txt", "r") as f:
+        for line in f:
+            q, c = line.strip().split("->")
+            q = int(q[1:])
+            c = int(c[1:])
+            mapping[c] = q
+    return mapping
 
-print_mapping()
+def unscramble(key, mapping):
+    nk = ["0" for i in range(len(key))]
+    key = list(reversed(key))
+    for i in range(len(key)):
+        nk[mapping[i]] = key[i]
+    return "".join(reversed(nk))
+
+def unscramble_counts(counts):
+    mapping = load_mapping()
+    return {unscramble(key, mapping): value for key, value in counts.items()}
