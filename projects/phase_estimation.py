@@ -2,26 +2,25 @@ from main import *
 from fourier_transform import iqft
 import math
 import numpy as np
+from qbit_mapping import unscramble_counts
+n = 5
 
-qp, qc, qr, cr = setup(3, login=True)
+qp, qc, qr, cr = setup(n, login=True)
 
-qc.h(qr[0])
-qc.h(qr[1])
-#qc.h(qr[2])
+rb = qr[n-1]
+qc.x(rb)
 
-qc.x(qr[2])
+for i in range(n-1):
+    qc.h(qr[i])
 
-u = lambda x, y: qc.cu1(1*math.pi/2, x, y)
+u = lambda x, y: qc.cu1(-1*math.pi/2, x, y)
 
-u(qr[0], qr[2])
-u(qr[1], qr[2])
-u(qr[1], qr[2])
-# u(qr[2], qr[3])
-# u(qr[2], qr[3])
-# u(qr[2], qr[3])
-# u(qr[2], qr[3])
+for i in range(n-1):
+    for _ in range(2**i):
+        u(qr[i], rb)
 
-iqft(qc, [qr[1], qr[0]])
+
+iqft(qc, [qr[i] for i in reversed(range(n-1))])
 
 qc.barrier(qr)
 
@@ -29,9 +28,12 @@ qc.measure(qr[0], cr[0])
 qc.measure(qr[1], cr[1])
 #qc.measure(qr[2], cr[2])
 
-result = execute(qp, backend="ibmqx5", info="2bit phase estimation S gate")
+#result = execute(qp, backend="ibmqx5", info="2bit phase estimation S gate (5 bit acc)")
 d = {}
-for key, val in result.get_counts("phase_estimation").items():
+
+counts = load("phase_estimation").get("data").get("counts")
+counts = unscramble_counts(counts)
+for key, val in counts.items():
     k = key[-2:]
     if k in d:
         d[k] += val

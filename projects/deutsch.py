@@ -55,3 +55,4 @@ print(result)
 print(result.get_counts("deutsch"))
 save(result, "ibmqx5", info="not")
 visualize(result, ntk=16)
+
