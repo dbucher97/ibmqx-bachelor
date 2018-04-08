@@ -1,14 +1,13 @@
 from main import *
 
-qp, qc, qr, cr = setup(2, login=True)
 
-def constant_0(efficient=True):
+def constant_0(qc, qr, efficient=True):
     if not efficient:
         qc.h(qr[0])
         qc.cx(qr[0], qr[1])
         qc.h(qr[0])
 
-def constant_1(efficient=True):
+def constant_1(qc, qr, efficient=True):
     if not efficient:
         qc.h(qr[0])
         qc.x(qr[0])
@@ -18,41 +17,48 @@ def constant_1(efficient=True):
     else:
         qc.x(qr[1])
 
-def identity():
+def identity(qc, qr):
     qc.cx(qr[0], qr[1])
 
-def fnot():
+def fnot(qc, qr):
     qc.x(qr[0])
     qc.cx(qr[0], qr[1])
     qc.x(qr[0])
 
-qc.x(qr[1])
+d = {
+    "constant 0 efficient": lambda qc, qr: constant_0(qc, qr, efficient=True),
+    "constant 0 inefficient": lambda qc, qr: constant_0(qc, qr, efficient=False),
+    "constant 1 efficient": lambda qc, qr: constant_1(qc, qr, efficient=True),
+    "constant 1 inefficient": lambda qc, qr: constant_1(qc, qr, efficient=False),
+    "identity": identity,
+    "not": fnot
+}
 
-# |psi_0>
+results = []
 
-qc.h(qr[0])
-qc.h(qr[1])
+for key, fun in d.items():
+    qp, qc, qr, cr = setup(2, login=True)
 
-# |psi_1>
+    qc.x(qr[1])
 
-#constant_0(efficient=False)
-#constant_1(efficient=False)
-#constant_0(efficient=True)
-#constant_1(efficient=True)
-#identity()
-fnot()
+    # |psi_0>
 
-# |psi_2>
+    qc.h(qr[0])
+    qc.h(qr[1])
 
-qc.h(qr[0])
+    # |psi_1>
 
-# |psi_3>
+    fun(qc, qr)
 
-qc.measure(qr, cr)
+    # |psi_2>
 
-result = execute(qp, backend="ibmqx5", sav=0)
-print(result)
-print(result.get_counts("deutsch"))
-save(result, "ibmqx5", info="not")
-visualize(result, ntk=16)
+    qc.h(qr[0])
+
+    # |psi_3>
+
+    qc.measure(qr, cr)
+
+    result = execute(qp, backend="ibmqx5", meta=key)
+    print(key, result.get_counts(get_name()))
+    results += [result]
 

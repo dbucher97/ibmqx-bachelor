@@ -1,6 +1,5 @@
 import os
 import json
-from main import *
 
 '''
 qc.measure(qr, cr) doesn't map the measured qbit to the classical bit with the same index.
@@ -8,16 +7,18 @@ qc.measure(qr, cr) doesn't map the measured qbit to the classical bit with the s
 this script sets every qbit squentiually high and measures the outcome to provide a map how the measurements are mapped.
 '''
 
+results = []
+
 def test(i):
-    qp, qc, qr, cr = setup(16)  # , login=True)
+    global results
+    print("Qbit %d"%i)
+    qp, qc, qr, cr = setup(16, login=True)
     qc.x(qr[i])
     qc.measure(qr, cr)
-    result = execute(qp, backend="ibmqx5", sav=0)
-    print(i, result.get_counts("qbit_mapping"))
-    save(result, "ibmqx5", info="q%d" % i)
+    result = execute(qp, backend="ibmqx5", meta="q%d"%i, unscramble=False)
+    results += [result]
+    print(result.get_counts("qbit_mapping"))
 
-# for i in range(9, 16):
-#    test(i)
 
 def num(s):
     return "".join(reversed(s)).find("1")
@@ -25,17 +26,18 @@ def num(s):
 
 def print_mapping():
     mapping = {}
-    for f in os.listdir("qbit_mapping"):
-        with open("qbit_mapping/"+f, "r") as ff:
-            j = json.load(ff)
-        info = j.get("info")
-        counts = j.get("data").get("counts")
+    for res in results:
+        meta = get_meta_from_result(res)
+        counts = res.get_counts(get_name())
         bitstr = max(counts.items(), key=lambda x: x[1])[0]
-        mapping[info] = bitstr
+        mapping[meta] = bitstr
         #print(num(bitstr))
     mapping = {i: "c"+str(num(mapping[i])) for i in sorted(mapping, key=lambda x: int(x[1:]))}
-    for k, v in mapping.items():
-        print(k + "->" + v)
+    with open("qbit_mapping.txt", "w") as f:
+        for k, v in mapping.items():
+            print(k + "->" + v)
+            f.write(k + "->" + v + "\n")
+
 
 def load_mapping():
     mapping = {}
@@ -47,6 +49,7 @@ def load_mapping():
             mapping[c] = q
     return mapping
 
+
 def unscramble(key, mapping):
     nk = ["0" for i in range(len(key))]
     key = list(reversed(key))
@@ -54,6 +57,16 @@ def unscramble(key, mapping):
         nk[mapping[i]] = key[i]
     return "".join(reversed(nk))
 
+
 def unscramble_counts(counts):
+    print("unscramble counts ...")
     mapping = load_mapping()
     return {unscramble(key, mapping): value for key, value in counts.items()}
+
+
+if __name__ == "__main__":
+    from main import *
+    print("Starting Qbit Test")
+    for i in range(16):
+        test(i)
+    print_mapping()

@@ -1,0 +1,89 @@
+{
+ "qobj": {
+  "id": "cnTqT2CGmcOFwJNw2TFSdzllQ9gE4C",
+  "config": {
+   "max_credits": 3,
+   "backend": "local_qiskit_simulator",
+   "shots": 1024
+  },
+  "circuits": [
+   {
+    "name": "test",
+    "config": {
+     "coupling_map": null,
+     "layout": null,
+     "basis_gates": "u1,u2,u3,cx,id,x,y,z,h,s,sdg,t,tdg,wait,noise,save,load,uzz",
+     "seed": null
+    },
+    "compiled_circuit": {
+     "operations": [
+      {
+       "name": "measure",
+       "qubits": [
+        1
+       ],
+       "clbits": [
+        1
+       ]
+      },
+      {
+       "name": "measure",
+       "qubits": [
+        0
+       ],
+       "clbits": [
+        0
+       ]
+      }
+     ],
+     "header": {
+      "number_of_qubits": 2,
+      "qubit_labels": [
+       [
+        "qr",
+        0
+       ],
+       [
+        "qr",
+        1
+       ]
+      ],
+      "number_of_clbits": 2,
+      "clbit_labels": [
+       [
+        "cr",
+        2
+       ]
+      ]
+     }
+    },
+    "compiled_circuit_qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg qr[2];\ncreg cr[2];\nmeasure qr[1] -> cr[1];\nmeasure qr[0] -> cr[0];\n"
+   }
+  ]
+ },
+ "result": {
+  "backend": "local_qiskit_simulator",
+  "id": "cnTqT2CGmcOFwJNw2TFSdzllQ9gE4C",
+  "result": [
+   {
+    "data": {
+     "counts": {
+      "00": 1024
+     },
+     "time_taken": 0.003507108
+    },
+    "name": "test",
+    "seed": 3007561167,
+    "shots": 1024,
+    "status": "DONE",
+    "success": true,
+    "threads_shot": 4
+   }
+  ],
+  "simulator": "qubit",
+  "status": "COMPLETED",
+  "success": true,
+  "time_taken": 0.003522509
+ },
+ "metadata": {}
+}
