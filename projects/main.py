@@ -60,14 +60,14 @@ def setup_circuit(qp, num_reg, additional_registers=None, name=None):
 def setup(num_reg, additional_registers=None, name=None, login=False):
     # Returns Quantum Program, Quantum Circuit.
     qp = QuantumProgram()
-    if login and not (len(sys.argv) > 1 and sys.argv[1] == "load"):
+    if login and not (len(sys.argv) > 1 and (sys.argv[1] == "load" or sys.argv[1] == "simulate")):
         qp.set_api(Qconfig.APItoken, Qconfig.config['url'])
     qc, qr, cr = setup_circuit(qp, num_reg, name=name, additional_registers=additional_registers)
     return qp, qc, qr, cr
 
 
 def execute(qp, circuits=None, backend="local_qiskit_simulator", shots=1024, sav=1, meta=None,
-            unscramble=True, max_credits=3):
+            unscramble=True, max_credits=3, config=None):
     # Executes specified circuits. If none specified, executes all.
     if len(sys.argv) > 1 and sys.argv[1] == "load":
         h = 1
@@ -79,6 +79,8 @@ def execute(qp, circuits=None, backend="local_qiskit_simulator", shots=1024, sav
             pass
         result = load_result(meta=meta, h=h)
     else:
+        if len(sys.argv) > 1 and sys.argv[1] == "simulate":
+            backend = "local_qiskit_simulator"
         if circuits == None:
             circuits = list(qp.get_circuit_names())
         result = None
@@ -88,7 +90,8 @@ def execute(qp, circuits=None, backend="local_qiskit_simulator", shots=1024, sav
                 print(jid, "failed")
                 add_failed_jobids([jid], name=result._qobj["circuits"][0]["name"])
             result = qp.execute(circuits, backend=backend,
-                                shots=shots, timeout=1200, wait=10, max_credits=max_credits)
+                                shots=shots, timeout=1200, wait=10, max_credits=max_credits,
+                                config=config)
         if sav == 2 or (sav == 1 and not is_simulation(backend)):
             save_result(result, meta=meta)
     if unscramble and backend == "ibmqx5":
@@ -167,6 +170,7 @@ def load_result(name=None, filename=None, meta=None, h=1, simulations=False):
             if c == h:
                 break
         filename = cur
+    print("loaded " + meta)
     result, meta = load_result_from_file(filename)
     add_meta_for_result(result, meta)
     return result

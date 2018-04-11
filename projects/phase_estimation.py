@@ -49,13 +49,13 @@ def print_handled_counts(res):
 
 if __name__ == "__main__":
     from main import *
-    n = 5
+    n = 3
     qp, qc, qrs, cr = setup(n, additional_registers={"qr": {"ur": 1}}, login=True)
     qr, ur = qrs
 
     qc.x(ur[0])
 
-    cu = lambda qc, ctl, ur, n: qc.cu1(n*2*np.pi*0.25, ctl, ur[0])
+    cu = lambda qc, ctl, ur, n: qc.cu1(n*2*np.pi*0.125, ctl, ur[0])
 
     phase_estimation(qc, qr, ur, cu)
     #qc.x(qr[2])
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     qc.barrier(qr)
     qc.measure(qr, cr)
 
-    res = execute(qp, meta="5-1 U1(0.25)", backend="ibmqx5")
+    res = execute(qp, meta="3-1 U1(0.125)", backend="ibmqx5")
 
     #print(res.get_counts(get_name()))
     res = handle_counts(res.get_counts(get_name()), n)
