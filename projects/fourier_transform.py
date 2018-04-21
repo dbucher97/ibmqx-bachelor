@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 
 def qbit_name(qbit):
@@ -56,8 +57,12 @@ def iqft2(qc, qr, swap=True):
         qc.h(qr[i])
 
 
-def iqft(qc, qbits, swap=True, debug=False):
+def iqft(qc, qbits, swap=True, debug=False, approx=0):
     n = len(qbits)
+    precision = float("inf")
+    if approx:
+        precision = int(np.ceil(np.log2(2*np.pi*n/approx)))
+        print("Approximated IQFT: at most %d c-R operations per qubit" %precision)
     if debug:
         print("\t".join([qbit_name(qbits[i]) for i in range(n)]))
     if swap==True:
@@ -67,6 +72,8 @@ def iqft(qc, qbits, swap=True, debug=False):
                 print("\t"*i+"x"+"-"*(8*(n-1-2*i)-1)+"x")
     for i in reversed(range(n)):
         for j in reversed(range(i+1, n)):
+            if j-i-1 >= precision:
+                continue
             cRdag(qc, j-i+1, qbits[j], qbits[i])
             if debug:
                 if i < j:

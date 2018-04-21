@@ -4,9 +4,13 @@ import json
 import os
 import time
 import datetime
+import cursor
+from multiprocessing.pool import ThreadPool
+from IBMQuantumExperience import IBMQuantumExperience
 from qiskit import QuantumProgram, QuantumCircuit
+from qiskit.backends import discover_remote_backends
 from qiskit.tools.visualization import plot_histogram, plot_circuit
-from qiskit.tools.file_io import file_datestr, save_result_to_file, load_result_from_file
+# from qiskit.tools.file_io import file_datestr, save_result_to_file, load_result_from_file
 from file_io import file_datestr, save_result_to_file, load_result_from_file
 from qbit_mapping import unscramble_counts
 
@@ -14,7 +18,7 @@ BASE_DIR = "/home/david/bachelor/ibmqx/projects/"
 os.chdir(BASE_DIR)
 
 meta_results = []
-
+api = None
 
 def is_simulation(backend):
     if backend in ["ibmqx2", "ibmqx4", "ibmqx5"]:
@@ -57,17 +61,70 @@ def setup_circuit(qp, num_reg, additional_registers=None, name=None):
     return qc, qr, cr
 
 
-def setup(num_reg, additional_registers=None, name=None, login=False):
+def setup_only(login=False):
     # Returns Quantum Program, Quantum Circuit.
     qp = QuantumProgram()
     if login and not (len(sys.argv) > 1 and (sys.argv[1] == "load" or sys.argv[1] == "simulate")):
-        qp.set_api(Qconfig.APItoken, Qconfig.config['url'])
+        global api
+        if not api:
+            api = IBMQuantumExperience(token=Qconfig.APItoken, config=Qconfig.config)
+            backends = discover_remote_backends(api)
+            print("Logged in. Possible backends: " + ", ".join(backends))
+            # deprecated
+            # qp.set_api(Qconfig.APItoken, Qconfig.config['url'])
+    return qp
+
+def setup(num_reg, additional_registers=None, name=None, login=False):
+    # Returns Quantum Program, Quantum Circuit.
+    qp = setup_only(login)
     qc, qr, cr = setup_circuit(qp, num_reg, name=name, additional_registers=additional_registers)
     return qp, qc, qr, cr
 
 
+def execute_on_device(qp, circuits, backend="local_qiskit_simulator", shots=1024, timeout=1200,
+                      wait=10, max_credits=3, config=None, coupling_map=None, basis_gates=None):
+    if backend not in ["ibmqx5", "ibmqx4", "ibmqx2"]:
+        result = qp.execute(circuits, backend=backend, shots=shots, timeout=timeout, wait=wait,
+               max_credits=max_credits, config=config, coupling_map=coupling_map,
+                            basis_gates=basis_gates)
+    else:
+        pool = ThreadPool(processes=1)
+        async_result = pool.apply_async(qp.execute, (circuits,),
+                                        {"backend": backend, "shots": shots, "timeout": timeout,
+                                         "wait": wait, "max_credits": max_credits, "config": config,
+                                         "coupling_map": coupling_map, "basis_gates": basis_gates})
+        c = 0
+        try:
+            cursor.hide()
+            st = time.time()
+            while not async_result.ready():
+                if c%50 == 0:
+                    device_info = api.backend_status(backend)
+                    if "busy" not in device_info:
+                        device_info["busy"] = False
+                print("Running on %s %s\tTime %s/%d\tDevice is %sbusy. %d pending jobs."
+                      %(backend, "/-\\|"[c%4], str(int(time.time()-st)).rjust(len(str(timeout)), " "),
+                        timeout, "" if device_info["busy"] else "not ", device_info["pending_jobs"]),
+                      end="\r")
+                c += 1
+                time.sleep(0.2)
+            cursor.show()
+            print("")
+        except KeyboardInterrupt:
+            cursor.show()
+            print("")
+            try:
+                sys.exit(0)
+            except SystemExit:
+                os._exit(0)
+        result = async_result.get()
+    return result
+
+
+
+
 def execute(qp, circuits=None, backend="local_qiskit_simulator", shots=1024, sav=1, meta=None,
-            unscramble=True, max_credits=3, config=None):
+            unscramble=True, max_credits=3, config=None, coupling_map=None, basis_gates=None):
     # Executes specified circuits. If none specified, executes all.
     if len(sys.argv) > 1 and sys.argv[1] == "load":
         h = 1
@@ -84,21 +141,23 @@ def execute(qp, circuits=None, backend="local_qiskit_simulator", shots=1024, sav
         if circuits == None:
             circuits = list(qp.get_circuit_names())
         result = None
+        print("\nEXECUTING " + ", ".join(circuits)+ " ON " + backend+ "\n")
         while result == None or result.get_status() == "ERROR":
             if not result == None:
                 jid = result.get_job_id()
-                print(jid, "failed")
+                print(jid, "failed, retry ...")
                 add_failed_jobids([jid], name=result._qobj["circuits"][0]["name"])
-            result = qp.execute(circuits, backend=backend,
+            result = execute_on_device(qp, circuits, backend=backend,
                                 shots=shots, timeout=1200, wait=10, max_credits=max_credits,
-                                config=config)
+                                config=config, coupling_map=coupling_map, basis_gates=basis_gates)
         if sav == 2 or (sav == 1 and not is_simulation(backend)):
             save_result(result, meta=meta)
     if unscramble and backend == "ibmqx5":
         for d in result._result["result"]:
-            d["data"]["counts"] = unscramble_counts(d["data"]["counts"])
+            dat = datetime.datetime.strptime(d["data"]["date"][:-5], "%Y-%m-%dT%H:%M:%S")
+            if dat < datetime.datetime(2018, 4, 15):
+                d["data"]["counts"] = unscramble_counts(d["data"]["counts"])
     return result
-
 
 def add_failed_jobids(jobids, name=None):
     if name == None:
@@ -188,10 +247,33 @@ def get_meta_from_result(result):
         if result == r:
             return m
 
-
 def visualize(result, circuits=None, ntk=False):
     # Visualizes specified curcuit results as histogram.
     if circuits == None:
         circuits = result.get_names()
     for name in circuits:
         plot_histogram(result.get_counts(name), ntk)
+
+def get_compiled_qasm(qp, name=None, backend="ibmqx5"):
+    if name==None:
+        name=get_name()
+    global api
+    if backend in ["ibmqx2", "ibmqx4", "ibmqx5"] and not api:
+        api = IBMQuantumExperience(token=Qconfig.APItoken, config=Qconfig.config)
+        backends = discover_remote_backends(api)
+        print("Logged in. Possible backends: " + ", ".join(backends))
+    qobj = qp.compile([name], backend=backend)
+    return qp.get_compiled_qasm(qobj, name)
+
+def count_gates(qasm):
+    lines = qasm.split("\n")
+    d = {"total": 0, "single": 0,  "controlled": 0}
+    no_gates = ["OPENQASM", "creg", "qreg", "include", "barrier", "measure"]
+    for line in lines:
+        if sum([line.startswith(g) for g in no_gates]) == 0 and line != "":
+            if line[0] == "c":
+                d["controlled"] += 1
+            else:
+                d["single"] += 1
+            d["total"] += 1
+    return d

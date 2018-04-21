@@ -1,0 +1,147 @@
+from main import *
+from phase_estimation import *
+import matplotlib.pyplot as plt
+
+coupling_map = [[1, 0], [1, 2], [2, 3], [3, 4], [3, 14], [5, 4], [6, 5], [6, 7], [6, 11], [7, 10],
+                [8, 7], [9, 8], [9, 10], [11, 10], [12, 5], [12, 11], [12, 13], [13, 4], [13, 14],
+                [15, 0], [15, 2], [15, 14]]
+basis_gates = "u1,u2,u3,cx,id"
+
+
+def gen_noise_params(relaxation, depol, pauli, unitary, gates=["U"], gate_time=1):
+    factor = np.exp(1j*unitary)
+    matrix_dephase = [
+        [[1, 0], [0, 0]],
+        [[0, 0], [factor.real, factor.imag]]
+    ]
+    pauli_dephase = [1-pauli, 0, 0, pauli]
+    d = {}
+    if pauli or unitary:
+        if depol == 0:
+            depol = 1e-5
+    if relaxation:
+        d["relaxation_rate"] = relaxation
+        d["thermal_populations"] = [1,0]
+    for g in gates:
+        d[g] = {"gate_time": gate_time}
+        if depol:
+            d[g]["p_depol"] = depol
+        if pauli:
+            d[g]["p_pauli"] = pauli_dephase
+        if unitary:
+            d[g]["U_error"] = matrix_dephase
+    return d
+
+def fill_counts(counts, n):
+    for i in range(2**n):
+        s = "{:b}".format(i)
+        s = "0"*(n-len(s))+s
+        if s not in counts:
+            counts[s] = 0
+    return counts
+
+
+def create_binary_phase_str(phase, n):
+    s = ""
+    for i in range(1, n+1):
+        if phase >= 1/2**i:
+            s += "1"
+            phase -= 1/2**i
+        else:
+            s += "0"
+    s="".join(reversed(s))
+    return s
+
+def get_error(phase, counts):
+    key = create_binary_phase_str(phase, len(list(counts.keys())[0]))
+    try:
+        return counts[key]/sum(counts.values())
+    except KeyError:
+        return 0
+
+def get_error_for_close(phase, counts):
+    n = len(list(counts.keys())[0])
+    key = create_binary_phase_str(phase, n)
+    key1 = create_binary_phase_str(phase+2**-n, n)
+    key2 = create_binary_phase_str(phase-2**-n, n)
+    x = 0
+    try:
+        x += counts[key]
+        x += counts[key1]
+        x += counts[key2]
+    except KeyError:
+        pass
+    return x/sum(counts.values())
+
+def run_pe_circuit(phase, n, a=0, relaxation=0, depol=0, pauli=0, unitary=0):
+    if a:
+        qp, qc, qrs, cr = setup(n, additional_registers={"qr": {"ur": 1, "ar": a}})
+        qr, ur, ar = qrs
+        qreg = [qr[i] for i in range(len(qr))]
+        qreg += [ar[i] for i in range(len(ar))]
+    else:
+        qp, qc, qrs, cr = setup(n, additional_registers={"qr": {"ur": 1}})
+        qr, ur = qrs
+        qreg = [qr[i] for i in range(len(qr))]
+
+    def cu(qc, ctl, ur, n):
+        p = (n*phase)%1
+        if not (p < 1e-5 or 1-p < 1e-5):
+            qc.cu1(p*2*np.pi, ctl, ur[0])
+
+    qc.x(ur[0])
+
+    phase_estimation(qc, qreg, ur, cu)
+
+    qc.measure(qr, cr)
+
+    noise_params = gen_noise_params(relaxation, depol, pauli, unitary)
+    res = execute(qp, config={"noise_params": noise_params}, coupling_map=coupling_map,
+                  basis_gates=basis_gates)
+    counts = res.get_counts(get_name())
+    return counts
+
+def error_fun_run(phase, fun, bounds, N):
+    x = np.linspace(*bounds, N)
+    errors = []
+    data = {"closest": []}
+    for e in x:
+        counts = fun(e)
+        errors+=[get_error(phase, counts)]
+        print(errors[-1])
+        data[str(e)] = counts
+        data["closest"] += [get_error_for_close(phase, counts)]
+    return x, errors, data
+
+
+def relaxation_run(phase, n, a=0, depol=0, pauli=0, unitary=0, bounds=[0, 0.1], N=5):
+    fun = lambda e: run_pe_circuit(phase, n, a, e, depol, pauli, unitary)
+    return error_fun_run(phase, fun, bounds, N)
+
+def depol_run(phase, n, a=0, relaxation=0, pauli=0, unitary=0, bounds=[0, 1], N=5):
+    fun = lambda e: run_pe_circuit(phase, n, a, relaxation, e, pauli, unitary)
+    return error_fun_run(phase, fun, bounds, N)
+
+def pauli_run(phase, n, a=0, relaxation=0, depol=0, unitary=0, bounds=[0, 1], N=5):
+    fun = lambda e: run_pe_circuit(phase, n, a, relaxation, depol, e, unitary)
+    return error_fun_run(phase, fun, bounds, N)
+
+def unitary_run(phase, n, a=0, relaxation=0, depol=0, pauli=0, bounds=[0, np.pi], N=5):
+    fun = lambda e: run_pe_circuit(phase, n, a, relaxation, depol, pauli, e)
+    return error_fun_run(phase, fun, bounds, N)
+
+def combined_noise_run(phase, n, a=0, relaxation=0, depol=0, pauli=0, unitary=0, N=5, bounds=[0, 1]):
+    fun = lambda e: run_pe_circuit(phase, n, a, e*relaxation, e*depol, e*pauli, e*unitary)
+    return error_fun_run(phase, fun, bounds, N)
+
+def num_qubits_run(phase, n, a=0, relaxation=0, depol=0, pauli=0, unitary=0, N=5):
+    fun = lambda e: run_pe_circuit(phase, int(n+e), a, relaxation, depol, pauli, unitary)
+    return error_fun_run(phase, fun, [0, N], N+1)
+
+if __name__ == "__main__":
+    x, e, data = combined_noise_run(0.5, 2, pauli=0.1, N=100)
+    # x, e, _ = num_qubits_run(0.5, 2, N=6, depol=0.001)
+    plt.axhline(y=1/2**4, color="r", linestyle="dashed")
+    plt.plot(x, e)
+    plt.plot(x, data["closest"])
+    plt.show()
