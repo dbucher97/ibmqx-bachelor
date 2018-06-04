@@ -8,25 +8,27 @@ coupling_map = [[1, 0], [1, 2], [2, 3], [3, 4], [3, 14], [5, 4], [6, 5], [6, 7],
 basis_gates = "u1,u2,u3,cx,id"
 
 
-def gen_noise_params(relaxation, depol, pauli, unitary, gates=["U"], gate_time=1):
+def gen_noise_params(relaxation=0, depol=0, pauli_x=0, pauli_z=0, unitary=0,
+                     gates=["U"], gate_time=1):
     factor = np.exp(1j*unitary)
     matrix_dephase = [
         [[1, 0], [0, 0]],
         [[0, 0], [factor.real, factor.imag]]
     ]
-    pauli_dephase = [1-pauli, 0, 0, pauli]
+    pauli_dephase = [1-pauli_x-pauli_z, pauli_x, 0, pauli_z]
     d = {}
-    if pauli or unitary:
+    if pauli_x or pauli_z or unitary:
         if depol == 0:
-            depol = 1e-5
+            depol = 1e-8
     if relaxation:
         d["relaxation_rate"] = relaxation
         d["thermal_populations"] = [1,0]
-    for g in gates:
+    for g in ["U", "id", "CX"]:
         d[g] = {"gate_time": gate_time}
+    for g in gates:
         if depol:
             d[g]["p_depol"] = depol
-        if pauli:
+        if pauli_x or pauli_z:
             d[g]["p_pauli"] = pauli_dephase
         if unitary:
             d[g]["U_error"] = matrix_dephase
@@ -67,7 +69,7 @@ def get_error_for_close(phase, counts):
     print(x, key, key1, key2)
     return x/sum(counts.values())
 
-def run_pe_circuit(phase, n, a=0, relaxation=0, depol=0, pauli=0, unitary=0):
+def run_pe_circuit(phase, n, a=0, relaxation=0, depol=0, pauli_x=0, pauli_z=0, unitary=0):
     if a:
         qp, qc, qrs, cr = setup(n, additional_registers={"qr": {"ur": 1, "ar": a}})
         qr, ur, ar = qrs
@@ -89,7 +91,8 @@ def run_pe_circuit(phase, n, a=0, relaxation=0, depol=0, pauli=0, unitary=0):
 
     qc.measure(qr, cr)
 
-    noise_params = gen_noise_params(relaxation, depol, pauli, unitary)
+    noise_params = gen_noise_params(relaxation, depol, pauli_x, pauli_z,
+                                    unitary)
     res = execute(qp, config={"noise_params": noise_params}, coupling_map=coupling_map,
                   basis_gates=basis_gates)
     counts = res.get_counts(get_name())
@@ -111,43 +114,47 @@ def error_fun_run(fun, bounds, N, phase=None):
     return x, errors, data
 
 
-def relaxation_run(phase, n, a=0, depol=0, pauli=0, unitary=0, bounds=[0, 0.1], N=5):
-    fun = lambda e: run_pe_circuit(phase, n, a, e, depol, pauli, unitary)
+def relaxation_run(phase, n, a=0, depol=0, pauli_x=0, pauli_z=0, unitary=0, bounds=[0, 0.1], N=5):
+    fun = lambda e: run_pe_circuit(phase, n, a, e, depol, pauli_x, pauli_z, unitary)
     return error_fun_run(fun, bounds, N, phase)
 
-def depol_run(phase, n, a=0, relaxation=0, pauli=0, unitary=0, bounds=[0, 1], N=5):
-    fun = lambda e: run_pe_circuit(phase, n, a, relaxation, e, pauli, unitary)
+def depol_run(phase, n, a=0, relaxation=0, pauli_x=0, pauli_z=0, unitary=0, bounds=[0, 1], N=5):
+    fun = lambda e: run_pe_circuit(phase, n, a, relaxation, e, pauli_x, pauli_z, unitary)
     return error_fun_run(fun, bounds, N, phase)
 
 def pauli_run(phase, n, a=0, relaxation=0, depol=0, unitary=0, bounds=[0, 1], N=5):
     fun = lambda e: run_pe_circuit(phase, n, a, relaxation, depol, e, unitary)
     return error_fun_run(fun, bounds, N, phase)
 
-def unitary_run(phase, n, a=0, relaxation=0, depol=0, pauli=0, bounds=[0, np.pi], N=5):
-    fun = lambda e: run_pe_circuit(phase, n, a, relaxation, depol, pauli, e)
+def unitary_run(phase, n, a=0, relaxation=0, depol=0, pauli_x=0, pauli_z=0, bounds=[0, np.pi], N=5):
+    fun = lambda e: run_pe_circuit(phase, n, a, relaxation, depol, pauli_x, pauli_z, e)
     return error_fun_run(fun, bounds, N, phase)
 
-def combined_noise_run(phase, n, a=0, relaxation=0, depol=0, pauli=0, unitary=0, N=5, bounds=[0, 1]):
-    fun = lambda e: run_pe_circuit(phase, n, a, e*relaxation, e*depol, e*pauli, e*unitary)
+def combined_noise_run(phase, n, a=0, relaxation=0, depol=0, pauli_x=0,
+                       pauli_z=0, unitary=0, N=5, bounds=[0, 1]):
+    fun = lambda e: run_pe_circuit(phase, n, a, e*relaxation, e*depol, e*pauli_x, e*pauli_z, e*unitary)
     return error_fun_run(fun, bounds, N, phase)
 
-def num_qubits_run(phase, n, a=0, relaxation=0, depol=0, pauli=0, unitary=0, N=5):
-    fun = lambda e: run_pe_circuit(phase, int(n+e), a, relaxation, depol, pauli, unitary)
+def num_qubits_run(phase, n, a=0, relaxation=0, depol=0, pauli_x=0, pauli_z=0, unitary=0, N=5):
+    fun = lambda e: run_pe_circuit(phase, int(n+e), a, relaxation, depol, pauli_x, pauli_z, unitary)
     return error_fun_run(fun, [0, N], N+1, phase)
 
-def num_ancilla_qubits_run(phase, n, a=0, relaxation=0, depol=0, pauli=0, unitary=0, N=5):
-    fun = lambda e: run_pe_circuit(phase, n, int(a+e), relaxation, depol, pauli, unitary)
+def num_ancilla_qubits_run(phase, n, a=0, relaxation=0, depol=0, pauli_x=0,
+                           pauli_z=0, unitary=0, N=5):
+    fun = lambda e: run_pe_circuit(phase, n, int(a+e), relaxation, depol, pauli_x, pauli_z, unitary)
     return error_fun_run(fun, [0, N], N+1, phase)
 
-def phase_run(n, a=0, relaxation=0, depol=0, pauli=0, unitary=0, N=10):
-    fun = lambda e: run_pe_circuit(e, n, a, relaxation, depol, pauli, unitary)
+def phase_run(n, a=0, relaxation=0, depol=0, pauli_x=0, pauli_z=0, unitary=0, N=10):
+    fun = lambda e: run_pe_circuit(e, n, a, relaxation, depol, pauli_x, pauli_z, unitary)
     return error_fun_run(fun, [0, 1-2**-N], N)
 
-def plot_phase_counts(hc, phase, n, nn=None):
+
+def plot_phase_counts(n, phi=None, prob=None, hc=None, phase=None, nn=None, label=""):
     bottom = 0.5
     ymin = bottom/(bottom+1)
-    phi = list(map(lambda x: x["phase_angle"]*2*np.pi, hc.values()))
-    prob = list(map(lambda x: x["percentage"]/100, hc.values()))
+    if hc:
+        phi = list(map(lambda x: x["phase_angle"]*2*np.pi, hc.values()))
+        prob = list(map(lambda x: x["percentage"]/100, hc.values()))
 
     # theta = np.linspace(0.0, 2 * np.pi, 2**n, endpoint=False)
     # radii = max_height*np.random.rand(N)
@@ -162,7 +169,8 @@ def plot_phase_counts(hc, phase, n, nn=None):
     ax.set_ylim(0, bottom+1)
     ax.yaxis.grid(False)
     ax.xaxis.grid(False)
-    ax.axvline(2*np.pi*phase, color="r", ymin=ymin)
+    if phase:
+        ax.axvline(2*np.pi*phase, color="r", ymin=ymin)
     ax.plot(np.linspace(0, 2*np.pi, 1000, endpoint=False), bottom*np.ones(1000), color="black", linewidth=.5)
     for p in [x/2**n*2*np.pi for x in range(2**n)]:
         ax.axvline(p, color="gray", linestyle="dotted", ymin=ymin, linewidth=1, zorder=-1)
@@ -173,17 +181,22 @@ def plot_phase_counts(hc, phase, n, nn=None):
     #     bar.set_facecolor(plt.cm.jet(r / 10.))
     #     bar.set_alpha(0.8)
 
-    plt.savefig("simulation_errors/phase_3_d0.01_%f.png"%phase)
+    plt.savefig("simulation_errors/combined/ancilla/%s.png"%label)
     plt.cla()
     #plt.show()
 
 if __name__ == "__main__":
     # x, e, data = phase_run(3, N=2, depol=0)
     n = 3
-    for phase in np.linspace(0, 0.125, 30):
-        counts = run_pe_circuit(phase, n, depol=0.01)
-        hc = handle_counts(counts, n)
-        plot_phase_counts(hc, phase, n, nn=5)
+    for d in np.linspace(0.0, 2**-n-2**-(n+2), 5):
+        x, e, data = num_ancilla_qubits_run(d, n, N=4, relaxation=0.01)
+        plt.plot(x, e)
+    plt.show()
+    # for phase in [i/2**n for i in range(2**n)]:
+    #     x, e, data = combined_noise_run(phase, n, a=2, depol=0.02, relaxation=0.05, unitary=0.2, N=10)
+    #     for label, counts in list(data.items())[1:]:
+    #         hc = handle_counts(counts, n)
+    #         plot_phase_counts(n, hc=hc, nn=5, label="phase_%fcombined_%s"%(phase, label))
     # x, e, _ = num_qubits_run(0.5, 2, N=6, depol=0.001)
     # plt.axhline(y=1/2**4, color="r", linestyle="dashed")
     # plt.plot(x, e)

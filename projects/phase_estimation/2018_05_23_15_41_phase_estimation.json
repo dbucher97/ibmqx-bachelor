@@ -1,0 +1,216 @@
+{
+ "metadata": "QPE(1+0)-1 U1(0.500000)",
+ "result": {
+  "job_id": "5b056da0aebacb00404c4721",
+  "status": "COMPLETED",
+  "result": [
+   {
+    "data": {
+     "time": 17.626150131225586,
+     "counts": {
+      "0000000000000000": 82,
+      "0000000000000001": 942
+     },
+     "date": "2018-05-23T13:43:35.829Z"
+    },
+    "status": "DONE"
+   }
+  ],
+  "name": "CoXuia341cr01gcjD67HzK2T9UUhVd",
+  "backend": "ibmqx5"
+ },
+ "qobj": {
+  "id": "CoXuia341cr01gcjD67HzK2T9UUhVd",
+  "config": {
+   "max_credits": 3,
+   "backend": "ibmqx5",
+   "shots": 1024
+  },
+  "circuits": [
+   {
+    "name": "phase_estimation",
+    "config": {
+     "coupling_map": [
+      [
+       1,
+       0
+      ],
+      [
+       1,
+       2
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       3,
+       14
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       7
+      ],
+      [
+       6,
+       11
+      ],
+      [
+       7,
+       10
+      ],
+      [
+       8,
+       7
+      ],
+      [
+       9,
+       8
+      ],
+      [
+       9,
+       10
+      ],
+      [
+       11,
+       10
+      ],
+      [
+       12,
+       5
+      ],
+      [
+       12,
+       11
+      ],
+      [
+       12,
+       13
+      ],
+      [
+       13,
+       4
+      ],
+      [
+       13,
+       14
+      ],
+      [
+       15,
+       0
+      ],
+      [
+       15,
+       2
+      ],
+      [
+       15,
+       14
+      ]
+     ],
+     "layout": [
+      [
+       [
+        "qr",
+        0
+       ],
+       [
+        "q",
+        0
+       ]
+      ],
+      [
+       [
+        "ur",
+        0
+       ],
+       [
+        "q",
+        1
+       ]
+      ]
+     ],
+     "basis_gates": "u1,u2,u3,cx,id",
+     "seed": null
+    },
+    "compiled_circuit": {
+     "operations": [
+      {
+       "name": "u3",
+       "params": [
+        3.141592653589793,
+        4.71238898038469,
+        1.5707963267948966
+       ],
+       "texparams": [
+        "3.14159265358979",
+        "\\frac{\\pi}{2} + 3.14159265358979",
+        "\\frac{\\pi}{2}"
+       ],
+       "qubits": [
+        1
+       ]
+      },
+      {
+       "name": "cx",
+       "params": [],
+       "texparams": [],
+       "qubits": [
+        1,
+        0
+       ]
+      },
+      {
+       "name": "barrier",
+       "qubits": [
+        0
+       ]
+      },
+      {
+       "name": "measure",
+       "qubits": [
+        0
+       ],
+       "clbits": [
+        0
+       ]
+      }
+     ],
+     "header": {
+      "number_of_qubits": 2,
+      "qubit_labels": [
+       [
+        "q",
+        0
+       ],
+       [
+        "q",
+        1
+       ]
+      ],
+      "number_of_clbits": 1,
+      "clbit_labels": [
+       [
+        "cr",
+        1
+       ]
+      ]
+     }
+    },
+    "compiled_circuit_qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[2];\ncreg cr[1];\nu3(3.14159265358979,4.71238898038469,1.57079632679490) q[1];\ncx q[1],q[0];\nbarrier q[0];\nmeasure q[0] -> cr[0];\n"
+   }
+  ]
+ }
+}

@@ -1,0 +1,75 @@
+\documentclass{standalone}
+
+\usepackage{tikz}
+\usepackage{amsmath}
+\usetikzlibrary{positioning,shapes,shadows,arrows}
+
+\begin{document}
+
+\def\vd {0.6cm}
+\def\hd {1cm}
+
+\def\ivs {-13pt}
+
+\newcommand{\displayqubiterrors}[2]{#1 \\#2}
+\newcommand{\displaycxerror}[1]{$#1$}
+
+%<<jid>>
+\begin{tikzpicture}[
+block/.style={
+    draw,
+    fill=white,
+    rectangle,
+    minimum width={1cm},
+    rectangle split,
+    rectangle split parts=2,
+    text width=1cm,
+    align=center
+},
+myarrow/.style={
+    -latex,
+    shorten <= 2pt,
+    shorten >= 2pt
+}]
+    \node(Q1) [block]                 {$Q_1$   \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r0>>}{<<g0>>}\end{align*}};
+    \node(Q2) [block, right=\hd of Q1]{$Q_2$   \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r1>>}{<<g1>>}\end{align*}};
+    \node(Q3) [block, right=\hd of Q2]{$Q_3$   \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r2>>}{<<g2>>}\end{align*}};
+    \node(Q4) [block, right=\hd of Q3]{$Q_4$   \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r3>>}{<<g3>>}\end{align*}};
+    \node(Q5) [block, right=\hd of Q4]{$Q_5$   \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r4>>}{<<g4>>}\end{align*}};
+    \node(Q6) [block, right=\hd of Q5]{$Q_6$   \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r5>>}{<<g5>>}\end{align*}};
+    \node(Q7) [block, right=\hd of Q6]{$Q_7$   \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r6>>}{<<g6>>}\end{align*}};
+    \node(Q8) [block, right=\hd of Q7]{$Q_8$   \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r7>>}{<<g7>>}\end{align*}};
+    \node(Q9) [block, below=\vd of Q8]{$Q_{9}$ \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r8>>}{<<g8>>}\end{align*}};
+    \node(Q10)[block, left=\hd of Q9 ]{$Q_{10}$\nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r9>>}{<<g9>>}\end{align*}};
+    \node(Q11)[block, left=\hd of Q10]{$Q_{11}$\nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r10>>}{<<g10>>}\end{align*}};
+    \node(Q12)[block, left=\hd of Q11]{$Q_{12}$\nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r11>>}{<<g11>>}\end{align*}};
+    \node(Q13)[block, left=\hd of Q12]{$Q_{13}$\nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r12>>}{<<g12>>}\end{align*}};
+    \node(Q14)[block, left=\hd of Q13]{$Q_{14}$\nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r13>>}{<<g13>>}\end{align*}};
+    \node(Q15)[block, left=\hd of Q14]{$Q_{15}$\nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r14>>}{<<g14>>}\end{align*}};
+    \node(Q0) [block, left=\hd of Q15]{$Q_{0}$ \nodepart{second}\vspace{\ivs}\begin{align*}\displayqubiterrors{<<r15>>}{<<g15>>}\end{align*}};
+
+    \draw[myarrow] (Q1)  -- (Q2)  node[above, midway]{\displaycxerror{<<cx1-2>>}};
+    \draw[myarrow] (Q1)  -- (Q0)  node[left , midway]{\displaycxerror{<<cx1-0>>}};
+    \draw[myarrow] (Q2)  -- (Q3)  node[above, midway]{\displaycxerror{<<cx2-3>>}};
+    \draw[myarrow] (Q3)  -- (Q4)  node[above, midway]{\displaycxerror{<<cx3-4>>}};
+    \draw[myarrow] (Q3)  -- (Q14) node[left , midway]{\displaycxerror{<<cx3-14>>}};
+    \draw[myarrow] (Q5)  -- (Q4)  node[above, midway]{\displaycxerror{<<cx5-4>>}};
+    \draw[myarrow] (Q6)  -- (Q5)  node[above, midway]{\displaycxerror{<<cx6-5>>}};
+    \draw[myarrow] (Q6)  -- (Q7)  node[above, midway]{\displaycxerror{<<cx6-7>>}};
+    \draw[myarrow] (Q6)  -- (Q11) node[left , midway]{\displaycxerror{<<cx6-11>>}};
+    \draw[myarrow] (Q7)  -- (Q10) node[left , midway]{\displaycxerror{<<cx7-10>>}};
+    \draw[myarrow] (Q8)  -- (Q7)  node[above, midway]{\displaycxerror{<<cx8-7>>}};
+    \draw[myarrow] (Q9)  -- (Q8)  node[left , midway]{\displaycxerror{<<cx9-8>>}};
+    \draw[myarrow] (Q9)  -- (Q10) node[below, midway]{\displaycxerror{<<cx9-10>>}};
+    \draw[myarrow] (Q11) -- (Q10) node[below, midway]{\displaycxerror{<<cx11-10>>}};
+    \draw[myarrow] (Q12) -- (Q11) node[below, midway]{\displaycxerror{<<cx12-11>>}};
+    \draw[myarrow] (Q12) -- (Q5)  node[left , midway]{\displaycxerror{<<cx12-5>>}};
+    \draw[myarrow] (Q12) -- (Q13) node[below, midway]{\displaycxerror{<<cx12-13>>}};
+    \draw[myarrow] (Q13) -- (Q14) node[below, midway]{\displaycxerror{<<cx13-14>>}};
+    \draw[myarrow] (Q13) -- (Q4)  node[left , midway]{\displaycxerror{<<cx13-4>>}};
+    \draw[myarrow] (Q15) -- (Q14) node[below, midway]{\displaycxerror{<<cx15-14>>}};
+    \draw[myarrow] (Q15) -- (Q2)  node[left , midway]{\displaycxerror{<<cx15-2>>}};
+    \draw[myarrow] (Q15) -- (Q0)  node[below, midway]{\displaycxerror{<<cx15-0>>}};
+\end{tikzpicture}
+
+\end{document}

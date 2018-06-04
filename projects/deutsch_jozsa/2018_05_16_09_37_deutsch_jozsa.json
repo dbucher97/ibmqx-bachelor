@@ -1,0 +1,207 @@
+{
+ "metadata": "deutsch_jozsa_n=1_constant_0",
+ "result": {
+  "job_id": "5afbdda50d5df70046e90fbd",
+  "status": "COMPLETED",
+  "result": [
+   {
+    "data": {
+     "time": 19.132801055908203,
+     "counts": {
+      "0000000000000000": 1008,
+      "0000000000000001": 16
+     },
+     "date": "2018-05-16T07:39:14.088Z"
+    },
+    "status": "DONE"
+   }
+  ],
+  "name": "dWRM3rzGgGHj0xHRCa3e3Yn4wgfecF",
+  "backend": "ibmqx5"
+ },
+ "qobj": {
+  "id": "dWRM3rzGgGHj0xHRCa3e3Yn4wgfecF",
+  "config": {
+   "max_credits": 3,
+   "backend": "ibmqx5",
+   "shots": 1024
+  },
+  "circuits": [
+   {
+    "name": "deutsch_jozsa",
+    "config": {
+     "coupling_map": [
+      [
+       1,
+       0
+      ],
+      [
+       1,
+       2
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       3,
+       14
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       7
+      ],
+      [
+       6,
+       11
+      ],
+      [
+       7,
+       10
+      ],
+      [
+       8,
+       7
+      ],
+      [
+       9,
+       8
+      ],
+      [
+       9,
+       10
+      ],
+      [
+       11,
+       10
+      ],
+      [
+       12,
+       5
+      ],
+      [
+       12,
+       11
+      ],
+      [
+       12,
+       13
+      ],
+      [
+       13,
+       4
+      ],
+      [
+       13,
+       14
+      ],
+      [
+       15,
+       0
+      ],
+      [
+       15,
+       2
+      ],
+      [
+       15,
+       14
+      ]
+     ],
+     "layout": [
+      [
+       [
+        "qr",
+        0
+       ],
+       [
+        "q",
+        0
+       ]
+      ],
+      [
+       [
+        "ar",
+        0
+       ],
+       [
+        "q",
+        1
+       ]
+      ]
+     ],
+     "basis_gates": "u1,u2,u3,cx,id",
+     "seed": null
+    },
+    "compiled_circuit": {
+     "operations": [
+      {
+       "name": "u3",
+       "params": [
+        1.5707963267948966,
+        3.141592653589793,
+        3.141592653589793
+       ],
+       "texparams": [
+        "1.5707963267949",
+        "3.14159265358979",
+        "3.14159265358979"
+       ],
+       "qubits": [
+        1
+       ]
+      },
+      {
+       "name": "barrier",
+       "qubits": [
+        0
+       ]
+      },
+      {
+       "name": "measure",
+       "qubits": [
+        0
+       ],
+       "clbits": [
+        0
+       ]
+      }
+     ],
+     "header": {
+      "number_of_qubits": 2,
+      "qubit_labels": [
+       [
+        "q",
+        0
+       ],
+       [
+        "q",
+        1
+       ]
+      ],
+      "number_of_clbits": 1,
+      "clbit_labels": [
+       [
+        "cr",
+        1
+       ]
+      ]
+     }
+    },
+    "compiled_circuit_qasm": "OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[2];\ncreg cr[1];\nu3(1.57079632679490,3.14159265358979,3.14159265358979) q[1];\nbarrier q[0];\nmeasure q[0] -> cr[0];\n"
+   }
+  ]
+ }
+}

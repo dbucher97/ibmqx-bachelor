@@ -20,6 +20,9 @@ os.chdir(BASE_DIR)
 meta_results = []
 api = None
 
+colors = {"exp": "#255F85", "exp0": "#255F85", "exp1": "#358229", "exp2": "#DFC670", "exp3": "#16DB93",
+          "sim": "#E9724C"}
+
 def is_simulation(backend):
     if backend in ["ibmqx2", "ibmqx4", "ibmqx5"]:
         return False
@@ -30,12 +33,18 @@ def is_simulation(backend):
 def get_name():
     return sys.argv[0][:-3]
 
+def get_api():
+    global api
+    return api
 
-def setup_circuit(qp, num_reg, additional_registers=None, name=None):
+
+def setup_circuit(qp, num_reg, classical=None, additional_registers=None, name=None):
     # Adds circiut to existing program.
     # Automatic Naming
     if name == None:
         name = get_name()
+    if classical == None:
+        classical=num_reg
     c = 0
     post = ''
     ppost = '%d' % len(qp.get_circuit_names()) if len(qp.get_circuit_names()) > 0 else ''
@@ -43,7 +52,7 @@ def setup_circuit(qp, num_reg, additional_registers=None, name=None):
         c += 1
         post = '_%d' % c
     qr = qp.create_quantum_register('qr'+ppost, num_reg)
-    cr = qp.create_classical_register('cr'+ppost, num_reg)
+    cr = qp.create_classical_register('cr'+ppost, classical)
     qrs = []
     crs = []
     if additional_registers:
@@ -60,39 +69,47 @@ def setup_circuit(qp, num_reg, additional_registers=None, name=None):
         cr = [cr] + crs
     return qc, qr, cr
 
+def register():
+    global api
+    if not api:
+        api = IBMQuantumExperience(token=Qconfig.APItoken, config=Qconfig.config)
+        backends = discover_remote_backends(api)
+        print("Logged in. Possible backends: " + ", ".join(backends))
+
 
 def setup_only(login=False):
     # Returns Quantum Program, Quantum Circuit.
     qp = QuantumProgram()
     if login and not (len(sys.argv) > 1 and (sys.argv[1] == "load" or sys.argv[1] == "simulate")):
-        global api
-        if not api:
-            api = IBMQuantumExperience(token=Qconfig.APItoken, config=Qconfig.config)
-            backends = discover_remote_backends(api)
-            print("Logged in. Possible backends: " + ", ".join(backends))
+        register()
             # deprecated
             # qp.set_api(Qconfig.APItoken, Qconfig.config['url'])
     return qp
 
-def setup(num_reg, additional_registers=None, name=None, login=False):
+def setup(num_reg, additional_registers=None, name=None, classical=None, login=False):
     # Returns Quantum Program, Quantum Circuit.
     qp = setup_only(login)
-    qc, qr, cr = setup_circuit(qp, num_reg, name=name, additional_registers=additional_registers)
+    qc, qr, cr = setup_circuit(qp, num_reg, name=name, classical=classical,
+                               additional_registers=additional_registers)
     return qp, qc, qr, cr
 
 
-def execute_on_device(qp, circuits, backend="local_qiskit_simulator", shots=1024, timeout=1200,
-                      wait=10, max_credits=3, config=None, coupling_map=None, basis_gates=None):
+def execute_on_device(qp, circuits, backend="local_qiskit_simulator", shots=1024, timeout=None,
+                      wait=10, max_credits=3, config=None, coupling_map=None, basis_gates=None,
+                      hpc=None, initial_layout=None):
     if backend not in ["ibmqx5", "ibmqx4", "ibmqx2"]:
         result = qp.execute(circuits, backend=backend, shots=shots, timeout=timeout, wait=wait,
                max_credits=max_credits, config=config, coupling_map=coupling_map,
-                            basis_gates=basis_gates)
+                            basis_gates=basis_gates, hpc=hpc, initial_layout=initial_layout)
     else:
         pool = ThreadPool(processes=1)
+        if not timeout:
+            timeout=max(400, 400*api.backend_status(backend).get("pending_jobs"))
         async_result = pool.apply_async(qp.execute, (circuits,),
                                         {"backend": backend, "shots": shots, "timeout": timeout,
                                          "wait": wait, "max_credits": max_credits, "config": config,
-                                         "coupling_map": coupling_map, "basis_gates": basis_gates})
+                                         "coupling_map": coupling_map, "basis_gates": basis_gates,
+                                         "hpc": hpc, "initial_layout": initial_layout})
         c = 0
         try:
             cursor.hide()
@@ -124,9 +141,10 @@ def execute_on_device(qp, circuits, backend="local_qiskit_simulator", shots=1024
 
 
 def execute(qp, circuits=None, backend="local_qiskit_simulator", shots=1024, sav=1, meta=None,
-            unscramble=True, max_credits=3, config=None, coupling_map=None, basis_gates=None):
+            unscramble=True, max_credits=3, config=None, coupling_map=None, basis_gates=None,
+            hpc=None, initial_layout=None):
     # Executes specified circuits. If none specified, executes all.
-    if len(sys.argv) > 1 and sys.argv[1] == "load":
+    if len(sys.argv) > 1 and (sys.argv[1] == "load" and backend in ["ibmqx2", "ibmqx4", "ibmqx5"]):
         h = 1
         try:
             h = int(sys.argv[2])
@@ -148,8 +166,9 @@ def execute(qp, circuits=None, backend="local_qiskit_simulator", shots=1024, sav
                 print(jid, "failed, retry ...")
                 add_failed_jobids([jid], name=result._qobj["circuits"][0]["name"])
             result = execute_on_device(qp, circuits, backend=backend,
-                                shots=shots, timeout=1200, wait=10, max_credits=max_credits,
-                                config=config, coupling_map=coupling_map, basis_gates=basis_gates)
+                                shots=shots, wait=10, max_credits=max_credits,
+                                config=config, coupling_map=coupling_map, basis_gates=basis_gates,
+                                hpc=hpc, initial_layout=initial_layout)
         if sav == 2 or (sav == 1 and not is_simulation(backend)):
             save_result(result, meta=meta)
     if unscramble and backend == "ibmqx5":
@@ -277,3 +296,29 @@ def count_gates(qasm):
                 d["single"] += 1
             d["total"] += 1
     return d
+
+def get_calibration(jid):
+    global api
+    if not api:
+        register()
+    j = api.get_job(jid)
+    return j["calibration"]
+
+def tex_calibration(jid):
+    calibration = get_calibration(jid)
+    dat = calibration["lastUpdateDate"]
+    d = {}
+    for qubit in calibration["qubits"]:
+        name = qubit.get("name")
+        if name:
+            dd = {}
+            dd["T1"] = qubit.get("T1").get("value")
+            dd["T2"] = qubit.get("T2").get("value")
+            dd["gate_error"] = qubit.get("gateError").get("value")
+            dd["readout_error"] = qubit.get("readoutError").get("value")
+            d[name] = dd
+    import tabulate
+    kv = {"T1": "$T_1\,[\mu s]$", "T2": "$T_2\,[\mu s]$", "readout_error": "$\epsilon_r$", "gate_error": "$\epsilon_g$"}
+    s = tabulate.tabulate([["Qubits", *list(map(lambda s: "$"+s[0]+"_"+s[1:]+"$", d.keys()))],
+        *[[v, *list(map(lambda x: round(x[k], 3), d.values()))] for k, v in kv.items()]], tablefmt="latex_raw")
+    os.system("echo '%s' > confs/%s.tex"%(s, dat))
