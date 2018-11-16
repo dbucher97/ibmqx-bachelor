@@ -9,7 +9,7 @@ basis_gates = "u1,u2,u3,cx,id"
 
 
 def gen_noise_params(relaxation=0, depol=0, pauli_x=0, pauli_z=0, unitary=0,
-                     gates=["U"], gate_time=1):
+                     gates=["U"], gate_time=1, thermal_populations=[0.75, 0.25]):
     factor = np.exp(1j*unitary)
     matrix_dephase = [
         [[1, 0], [0, 0]],
@@ -22,7 +22,7 @@ def gen_noise_params(relaxation=0, depol=0, pauli_x=0, pauli_z=0, unitary=0,
             depol = 1e-8
     if relaxation:
         d["relaxation_rate"] = relaxation
-        d["thermal_populations"] = [1,0]
+        d["thermal_populations"] = thermal_populations
     for g in ["U", "id", "CX"]:
         d[g] = {"gate_time": gate_time}
     for g in gates:
@@ -97,6 +97,35 @@ def run_pe_circuit(phase, n, a=0, relaxation=0, depol=0, pauli_x=0, pauli_z=0, u
                   basis_gates=basis_gates)
     counts = res.get_counts(get_name())
     return counts
+
+def pe_circuit_gate_counts(phase, n, a=0, relaxation=0, depol=0, pauli_x=0, pauli_z=0, unitary=0):
+    if a:
+        qp, qc, qrs, cr = setup(n, additional_registers={"qr": {"ur": 1, "ar": a}})
+        qr, ur, ar = qrs
+        qreg = [qr[i] for i in range(len(qr))]
+        qreg += [ar[i] for i in range(len(ar))]
+    else:
+        qp, qc, qrs, cr = setup(n, additional_registers={"qr": {"ur": 1}})
+        qr, ur = qrs
+        qreg = [qr[i] for i in range(len(qr))]
+
+    def cu(qc, ctl, ur, n):
+        p = (n*phase)%1
+        if not (p < 1e-5 or 1-p < 1e-5):
+            qc.cu1(p*2*np.pi, ctl, ur[0])
+
+    qc.x(ur[0])
+
+    phase_estimation(qc, qreg, ur, cu)
+
+    qc.measure(qr, cr)
+
+    noise_params = gen_noise_params(relaxation, depol, pauli_x, pauli_z,
+                                    unitary)
+    res = qp.compile(get_name(), config={"noise_params": noise_params}, coupling_map=coupling_map,
+                  basis_gates=basis_gates)
+    return count_gates(qp.get_compiled_qasm(res, get_name()))
+
 
 def error_fun_run(fun, bounds, N, phase=None):
     x = np.linspace(*bounds, N)

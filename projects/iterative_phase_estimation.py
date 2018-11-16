@@ -92,11 +92,11 @@ def plot_with_phase(org_phase, n):
     # ax.text(10, 1, r"$\tilde{\varphi} = 0.%s = %f$" % ("".join(map(str, reversed(phi))), phase),
     #         rotation=90)
 
-    ax.set_xlabel("Iteration\n"+r"$\tilde{\varphi} = 0.%s = %.10f$" %
+    ax.set_xlabel("Iteration\n"+r"$\tilde{\varphi} = (0.%s)_2 = %.10f$" %
                   ("".join(map(str,reversed(phi))), phase))
     ax.set_yticks([-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75])
     ax.set_yticklabels(["", "0", "", "", "", "1", ""])
-    ax.set_ylabel("Decision")
+    ax.set_ylabel("decision")
 
     ax.grid(linestyle="dotted")
 
@@ -106,7 +106,7 @@ def plot_with_phase(org_phase, n):
     ax.set_ylim(ymax=1.3)
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-    plt.savefig("plots/ipea.pdf", bbox_inches="tight")
+    plt.savefig("plots/ipea.pdf", bbox_inches="tight", transparent=True)
 
 
 if __name__ == "__main__":

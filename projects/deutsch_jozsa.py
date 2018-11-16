@@ -68,7 +68,7 @@ ax.bar(*counts_percentage(counts, offset=bwidth/2), label="Simulation", color=co
 
 ax.set_xticks([0, 1])
 ax.set_xticklabels(["0\n(constant)", "rest\n(balanced)"])
-ax.set_ylabel("Percentage")
+ax.set_ylabel("probability")
 
 ax.legend(bbox_to_anchor=(0, 1.2, 1, 0))
 

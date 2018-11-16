@@ -110,7 +110,10 @@ def setup_phase_counts_plot(plt, n, bottom=0.5, width=None, top=0.25, r=0.1, ste
         fig, axes = plt.subplots(*subplots, figsize=(fs*subplots[1],
                                                      fs*subplots[0]),
                                  subplot_kw={"polar": True})
-        fig.subplots_adjust(wspace=fs/10)
+        if subplots[1] > 1:
+            l = subplots[0]*subplots[1]
+            axes = axes.reshape((1, l))[0]
+        fig.subplots_adjust(wspace=fs/10, hspace=fs/10)
     else:
         fig, ax = plt.subplots(figsize=(fs, fs), subplot_kw={"polar": True})
         axes = [ax]
@@ -120,8 +123,8 @@ def setup_phase_counts_plot(plt, n, bottom=0.5, width=None, top=0.25, r=0.1, ste
         ax.set_xticks([x/2**nn*2*np.pi for x in range(2**nn)])
         ax.set_xticklabels([round(x/2**nn, 3) for x in range(2**nn)])
         ax.set_rlabel_position(68)
-        set_ticks(ax, step, bottom, top)
         set_top(ax, top, bottom, r)
+        set_ticks(ax, step, top, bottom)
         # ax.set_ylabel("counts/shots")
         ax.yaxis.grid(True, color="black", alpha=0.5)
         ax.set_axisbelow(True)
@@ -155,19 +158,21 @@ def run_phase_plot(n, phase):
     hc = dummy_phase_estimation(phase, n=n, backend="ibmqx5", coupling_map=coupling_map,
                                 basis_gates=basis_gates, skip=skip)
     hc_sim = dummy_phase_estimation(phase, n=n, coupling_map=coupling_map, basis_gates=basis_gates)
-    ax = setup_phase_counts_plot(plt, n, top=1, step=0.2, fs=3, phi=phase)
-    plot_phase_counts(ax, hc_sim, width = 0.15, offset=0.1, color=colors["sim"], label="Simulation")
-    plot_phase_counts(ax, hc,     width = 0.15, offset=-0.1, color=colors["exp"], label="ibmqx5")
+    ax = setup_phase_counts_plot(plt, n, top=1, step=0.25, fs=3, phi=phase)
+    plot_phase_counts(ax, hc_sim, width = 0.2, offset=0.1, color=colors["sim"], label="Simulation")
+    plot_phase_counts(ax, hc,     width = 0.2, offset=-0.1, color=colors["exp"], label="ibmqx5")
     if n == 1 and phase==0.5:
         ax.legend(loc="upper right", bbox_to_anchor=(1.1, 0.1))
-    plt.savefig("plots/pe_n=%d_p=%.5f.pdf"%(n, phase))
+    plt.savefig("plots/pe_n=%d_p=%.5f.pdf"%(n, phase), transparent=True)
     plt.cla()
 
 if __name__ == "__main__":
+    # run_phase_plot(1, 0.5)
     for i in range(1, 4):
         run_phase_plot(i, 0.5)
     for i in range(1, 4):
         run_phase_plot(i, 0.7)
+    # run_phase_plot(1, 0.7)
     # if len(res) > 1:
     #     top2 = list(res.values())[:2]
     #     from scipy.optimize import minimize

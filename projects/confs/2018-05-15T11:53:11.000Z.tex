@@ -1,0 +1,114 @@
+\documentclass[border={10pt 10pt 10pt 10pt}]{standalone}
+
+\usepackage{siunitx}
+\usepackage{ifthen}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes,shadows,arrows}
+
+\newlength{\hp}
+\newlength{\hs}
+\newlength{\vs}
+\setlength{\hp}{3pt}
+\setlength{\hs}{0.5cm}
+\setlength{\vs}{0.8cm}
+% \renewcommand{\baselinestretch}{.8}
+
+\newcommand{\hsep}{\\[\hp]\hrule\vspace{\hp}}
+\newcommand{\hhsep}{\\[\hp]\hrule\vspace{1pt}\hrule\vspace{2\hp}}
+
+
+\newcommand{\subone}[1]{\number\numexpr#1-1\relax}
+
+\newcommand{\getnode}[3]{
+    \ifthenelse{\not\equal{#1}{0}}{
+        \ifthenelse{\equal{#1}{1}}{
+            \node(Q#1)[block, above=\hs of Q\subone{#1}]{#2};
+        }{
+            \ifthenelse{\equal{#1}{9}}{
+                \node(Q#1)[block, below=\hs of Q\subone{#1}]{#2};
+            }{
+                \ifthenelse{#1>9}{
+                    \node(Q#1)[block, left=\vs of Q\subone{#1}]{#2};
+                }{
+                    \node(Q#1)[block, right=\vs of Q\subone{#1}]{#2};
+                }
+            }
+
+        }
+    }{
+        \node(Q#1)[block]{#2};
+    }
+}
+
+\newcommand{\qubit}[5]{
+    \getnode{#1}{$Q_{#1}$\hsep #2\\#3\\#4\\#5}
+}
+
+
+\newcommand{\displaycxerror}[1]{$#1$}
+
+\begin{document}
+\begin{tikzpicture}[
+block/.style={
+    draw,
+    fill=white,
+    rectangle,
+    inner xsep=0pt,
+    inner ysep=\hp,
+    text width=0.8cm,
+    align=center,
+},
+myarrow/.style={
+    -latex,
+    shorten <= 2pt,
+    shorten >= 2pt
+}]
+
+% {{{ qubits
+\qubit{0}{19.1}{22.6}{3.03}{0.64};
+\qubit{1}{36.2}{58.3}{3.49}{0.63};
+\qubit{2}{37.7}{54.7}{3.06}{0.43};
+\qubit{3}{36.1}{64.9}{2.33}{0.56};
+\qubit{4}{30.8}{41.7}{1.82}{0.73};
+\qubit{5}{46.2}{46}{1.54}{0.44};
+\qubit{6}{46.9}{80.2}{1.46}{0.40};
+\qubit{7}{48.8}{63.8}{1.88}{0.55};
+\qubit{8}{55.7}{92.4}{2.14}{0.53};
+\qubit{9}{37.5}{69.9}{1.48}{1.02};
+\qubit{10}{34.4}{51.7}{2.66}{0.75};
+\qubit{11}{42.4}{69.9}{1.58}{0.77};
+\qubit{12}{50.5}{51.2}{1.75}{1.11};
+\qubit{13}{58.4}{115.4}{1.73}{0.37};
+\qubit{14}{32.5}{55.1}{2.32}{0.70};
+\qubit{15}{39.7}{69.4}{3.79}{1.11};
+% }}}
+    \draw[myarrow] (Q1)  -- (Q2)  node[above, midway]{\displaycxerror{0.39}};
+    \draw[myarrow] (Q1)  -- (Q0)  node[left , midway]{\displaycxerror{0.57}};
+    \draw[myarrow] (Q2)  -- (Q3)  node[above, midway]{\displaycxerror{0.38}};
+    \draw[myarrow] (Q3)  -- (Q4)  node[above, midway]{\displaycxerror{0.47}};
+    \draw[myarrow] (Q3)  -- (Q14) node[left , midway]{\displaycxerror{0.37}};
+    \draw[myarrow] (Q5)  -- (Q4)  node[above, midway]{\displaycxerror{0.48}};
+    \draw[myarrow] (Q6)  -- (Q5)  node[above, midway]{\displaycxerror{0.35}};
+    \draw[myarrow] (Q6)  -- (Q7)  node[above, midway]{\displaycxerror{0.27}};
+    \draw[myarrow] (Q6)  -- (Q11) node[left , midway]{\displaycxerror{0.30}};
+    \draw[myarrow] (Q7)  -- (Q10) node[left , midway]{\displaycxerror{0.62}};
+    \draw[myarrow] (Q8)  -- (Q7)  node[above, midway]{\displaycxerror{0.45}};
+    \draw[myarrow] (Q9)  -- (Q8)  node[left , midway]{\displaycxerror{0.35}};
+    \draw[myarrow] (Q9)  -- (Q10) node[below, midway]{\displaycxerror{0.49}};
+    \draw[myarrow] (Q11) -- (Q10) node[below, midway]{\displaycxerror{2.15}};
+    \draw[myarrow] (Q12) -- (Q11) node[below, midway]{\displaycxerror{0.35}};
+    \draw[myarrow] (Q12) -- (Q5)  node[left , midway]{\displaycxerror{0.38}};
+    \draw[myarrow] (Q12) -- (Q13) node[below, midway]{\displaycxerror{0.42}};
+    \draw[myarrow] (Q13) -- (Q14) node[below, midway]{\displaycxerror{0.37}};
+    \draw[myarrow] (Q13) -- (Q4)  node[left , midway]{\displaycxerror{0.50}};
+    \draw[myarrow] (Q15) -- (Q14) node[below, midway]{\displaycxerror{0.32}};
+    \draw[myarrow] (Q15) -- (Q2)  node[left , midway]{\displaycxerror{0.39}};
+    \draw[myarrow] (Q15) -- (Q0)  node[below, midway]{\displaycxerror{0.54}};
+
+
+    \node(Qinfo) [block, text width=1.8cm, left=1cm of Q1, yshift=-0.12cm]{$Q$ errors\hsep $T_1\,[\si{\micro\second}]$\\ $T_2\,[\si{\micro\second}]$\\$\epsilon_g\times10^{3}$\\ $\epsilon_r\times10^{1}$  };
+    \node(CXinfo)[block, text width=1.8cm, below=0.18cm of Qinfo] {$CX$ error \hsep $\epsilon_{cx}\times 10^{1}$};
+    \node(Dateinfo) [block, text width=1.8cm, below=0.18cm of CXinfo] {Date \hsep 2018-05-15 \\ 11:53:11};
+
+\end{tikzpicture}
+\end{document}

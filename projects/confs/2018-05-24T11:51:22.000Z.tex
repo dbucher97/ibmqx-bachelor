@@ -1,0 +1,60 @@
+\documentclass{standalone}
+
+\usepackage{siunitx}
+\usepackage{ifthen}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes,shadows,arrows}
+
+\usepackage{confstyle}
+
+\begin{document}
+\begin{tikzpicture}
+
+% {{{ qubits
+\qubit{0}{48.3}{33.1}{1.78}{0.51};
+\qubit{1}{45.8}{69.6}{2.93}{0.53};
+\qubit{2}{33.9}{49.2}{3.42}{0.46};
+\qubit{3}{57.2}{87.6}{2.60}{0.59};
+\qubit{4}{54.9}{99.7}{1.04}{0.62};
+\qubit{5}{47.2}{49.2}{1.90}{0.71};
+\qubit{6}{23.4}{34.3}{2.99}{0.49};
+\qubit{7}{45.1}{58.2}{1.95}{0.45};
+\qubit{8}{57.7}{85.7}{1.22}{0.43};
+\qubit{9}{32.2}{65.3}{1.86}{1.27};
+\qubit{10}{56.5}{110.7}{1.43}{0.81};
+\qubit{11}{40.5}{46.4}{2.16}{0.46};
+\qubit{12}{44.9}{45}{3.30}{1.03};
+\qubit{13}{41.4}{41.9}{3.07}{0.39};
+\qubit{14}{34.7}{64.7}{1.74}{0.60};
+\qubit{15}{36.5}{71.8}{3.50}{1.31};
+% }}}
+    \draw[myarrow] (Q1)  -- (Q2)  node[above, midway]{\displaycxerror{4.36}};
+    \draw[myarrow] (Q1)  -- (Q0)  node[left , midway]{\displaycxerror{2.85}};
+    \draw[myarrow] (Q2)  -- (Q3)  node[above, midway]{\displaycxerror{4.72}};
+    \draw[myarrow] (Q3)  -- (Q4)  node[above, midway]{\displaycxerror{3.97}};
+    \draw[myarrow] (Q3)  -- (Q14) node[left , midway]{\displaycxerror{4.44}};
+    \draw[myarrow] (Q5)  -- (Q4)  node[above, midway]{\displaycxerror{2.89}};
+    \draw[myarrow] (Q6)  -- (Q5)  node[above, midway]{\displaycxerror{5.38}};
+    \draw[myarrow] (Q6)  -- (Q7)  node[above, midway]{\displaycxerror{4.82}};
+    \draw[myarrow] (Q6)  -- (Q11) node[left , midway]{\displaycxerror{5.00}};
+    \draw[myarrow] (Q7)  -- (Q10) node[left , midway]{\displaycxerror{3.60}};
+    \draw[myarrow] (Q8)  -- (Q7)  node[above, midway]{\displaycxerror{3.36}};
+    \draw[myarrow] (Q9)  -- (Q8)  node[left , midway]{\displaycxerror{3.22}};
+    \draw[myarrow] (Q9)  -- (Q10) node[below, midway]{\displaycxerror{4.05}};
+    \draw[myarrow] (Q11) -- (Q10) node[below, midway]{\displaycxerror{3.59}};
+    \draw[myarrow] (Q12) -- (Q11) node[below, midway]{\displaycxerror{4.36}};
+    \draw[myarrow] (Q12) -- (Q5)  node[left , midway]{\displaycxerror{4.35}};
+    \draw[myarrow] (Q12) -- (Q13) node[below, midway]{\displaycxerror{4.05}};
+    \draw[myarrow] (Q13) -- (Q14) node[below, midway]{\displaycxerror{4.84}};
+    \draw[myarrow] (Q13) -- (Q4)  node[left , midway]{\displaycxerror{3.09}};
+    \draw[myarrow] (Q15) -- (Q14) node[below, midway]{\displaycxerror{3.94}};
+    \draw[myarrow] (Q15) -- (Q2)  node[left , midway]{\displaycxerror{4.47}};
+    \draw[myarrow] (Q15) -- (Q0)  node[below, midway]{\displaycxerror{4.02}};
+
+
+    \node(Qinfo) [legend, left=\ld of Q1, yshift=\lo]{$Q$ errors\hsep $T_1\,[\si{\micro\second}]$\\ $T_2\,[\si{\micro\second}]$\\$\epsilon_g\times10^{3}$\\ $\epsilon_r\times10^{1}$  };
+    \node(CXinfo)[legend, below=\ls of Qinfo] {$CX$ error \hsep $\epsilon_{cx}\times 10^{2}$};
+    \node(Dateinfo) [legend, below=\ls of CXinfo] {Date \hsep 18-05-24 \\ 11:51:22};
+
+\end{tikzpicture}
+\end{document}

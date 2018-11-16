@@ -1,5 +1,5 @@
 from main import load_result, colors
-import sys
+import sys, os
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -41,11 +41,10 @@ def plot_all(typ, theo=0):
     ax.grid(linestyle="dotted", color="black", alpha=0.4)
     if theo == 1: ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-    plt.savefig("plots/dj_%s_%s.pdf"%("_".join(sys.argv[1:]), typ), bbox_inches="tight")
+    plt.savefig("plots/dj_%s_%s.pdf"%("_".join(sys.argv[1:]), typ), bbox_inches="tight", transparent=True)
 
 
 
 plot_all("balanced", theo=1)
 plot_all("constant_0", theo=0)
-
 

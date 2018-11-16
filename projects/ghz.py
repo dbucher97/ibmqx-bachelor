@@ -53,7 +53,7 @@ def run_bell(n):
     ax.bar(*bell_perc(counts, bwidth/2, ibm=True), color=colors["exp"], width=bwidth-marg,
            label="ibmqx5")
 
-    if n == 0: ax.set_ylabel("Percentage")
+    if n == 0: ax.set_ylabel("probability")
     names = [r"$|\Phi^+\rangle$", r"$|\Phi^-\rangle$", r"$|\Psi^+\rangle$", r"$|\Psi^-\rangle$"]
     ax.set_title(names[n])
     ax.set_xticks(range(4))
@@ -61,7 +61,7 @@ def run_bell(n):
     ax.grid(linestyle="dotted", color="black", alpha=0.4)
     if n == 3: ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-    plt.savefig("plots/%s.pdf"%meta, bbox_inches="tight")
+    plt.savefig("plots/%s.pdf"%meta, bbox_inches="tight", transparent=True)
 
 def ghz_perc(counts, n, offset):
     c = [0, 0, 0]
@@ -103,13 +103,14 @@ def run_ghz(ns):
                width=bwidth-marg)
 
     meta = "ghz_"+"_".join(map(str, ns))
-    ax.set_ylabel("Percentage")
+    ax.set_ylabel("probability")
+    ax.set_title("GHZ")
     ax.set_xticks(range(3))
-    ax.set_xticklabels(["0s", "1s", "rest"])
+    ax.set_xticklabels(["all 0s", "all 1s", "rest"])
     ax.grid(linestyle="dotted", color="black", alpha=0.4)
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-    plt.savefig("plots/%s.pdf"%meta, bbox_inches="tight")
+    plt.savefig("plots/%s.pdf"%meta, bbox_inches="tight", transparent=True)
 
 
 def gen_linear_layout(regs):
@@ -125,6 +126,10 @@ def gen_linear_layout(regs):
     return ret
 
 if __name__ == "__main__":
-    for i in range( 4):
-        run_bell(i)
+    run_bell(0)
+    # run_bell(1)
+    # run_bell(2)
+    # run_bell(3)
+    # for i in range( 4):
+        # run_bell(i)
     # run_ghz([4, 8, 16])

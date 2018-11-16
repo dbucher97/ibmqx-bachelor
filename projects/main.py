@@ -20,8 +20,10 @@ os.chdir(BASE_DIR)
 meta_results = []
 api = None
 
-colors = {"exp": "#255F85", "exp0": "#255F85", "exp1": "#358229", "exp2": "#DFC670", "exp3": "#16DB93",
-          "sim": "#E9724C"}
+col_list = ["#255F85", "#E9724C", "#358229", "#F22B32", "#BBAB0B"]
+# col_list = ["#235789", "#C1292E", "#5BAA1D", "#E58B19", "#161925"]
+colors = {"exp": col_list[0], "exp0": col_list[0], "exp1": col_list[2], "exp2": col_list[3], "exp3":
+          col_list[4], "sim": col_list[1]}
 
 def is_simulation(backend):
     if backend in ["ibmqx2", "ibmqx4", "ibmqx5"]:
@@ -248,8 +250,12 @@ def load_result(name=None, filename=None, meta=None, h=1, simulations=False):
             if c == h:
                 break
         filename = cur
-    print("loaded " + meta)
     result, meta = load_result_from_file(filename)
+    jid = result.get_job_id()
+    print("loaded " + meta, "; " + jid)
+    if os.path.isfile("confs/bin"):
+        with open("confs/bin", "a") as f:
+            f.write(jid+" ")
     add_meta_for_result(result, meta)
     return result
 

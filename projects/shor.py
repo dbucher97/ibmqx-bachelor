@@ -69,28 +69,35 @@ qc.measure(qr, cr)
 # qc.measure(ar, acr)
 #
 result = execute(qp, meta="shor_n=%d"%n, backend="ibmqx5")
-# print(result.get_counts(get_name()))
+print(result.get_counts(get_name()))
 
 
 #for 3 skip [0]
 skip = []
+if n == 2:
+    skip = [0]
 if n == 3:
     skip = [0]
 hc = handle_counts(result.get_counts(get_name()), n, skip=skip)
 print_handled_counts(hc)
 
+# from simulation_errors import gen_noise_params, coupling_map, basis_gates
+# noise_params = gen_noise_params(relaxation=1/100, depol=0.01)
+# res_sim = execute(qp, config={"noise_params": noise_params}, coupling_map=coupling_map, basis_gates=basis_gates)
+
 res_sim = execute(qp)
 hcs = handle_counts(res_sim.get_counts(get_name()), n)
 print_handled_counts(hcs)
 
-ax = setup_phase_counts_plot(plt, n, top=0.3, r=0.1)
+ax = setup_phase_counts_plot(plt, n, top=0.32, r=0.1)
 plot_phase_counts(ax, hcs, width=0.12, offset=0.06, color=colors["sim"], label="Simulation")
 plot_phase_counts(ax, hc, width=0.12, offset=-0.06, color=colors["exp"], label="ibmqx5")
 if n == 3:
     ax.plot(np.linspace(0, 1*2*np.pi, 1000), 0.5+np.ones(1000)*0.097, linestyle="dashed", color="red")
 # ax.plot(np.linspace(0, 1*2*np.pi, 1000), 0.5+np.ones(1000)*1/8, linestyle="dotted", color="red", alpha=0.6)
 ax.legend(loc="upper right", bbox_to_anchor=(1.1, 0))
-ax.set_title("Shor's algorithm N=15, m=%d\n"%n)
+# ax.set_title("Shor's algorithm N=15, m=%d\n"%n)
 ax.set_xlabel(r"$\varphi$")
 
-plt.savefig("plots/shor_%d.pdf"%n, bbox_inches="tight")
+plt.savefig("plots/shor_%d.pdf"%n, bbox_inches="tight", transparent=True)
+# plt.show()

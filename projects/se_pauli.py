@@ -10,7 +10,7 @@ def pauli_plot_run(n, l, pzmax=0.08, pxmax=0, phase=None):
         phase=2**-n
 
 
-    axes = setup_phase_counts_plot(plt, n, subplots=(1, l), top=1, step=0.2)
+    axes = setup_phase_counts_plot(plt, n, subplots=(1, l), top=1, step=0.2, phi=phase)
 
     for pz, px, ax in zip(np.linspace(0, pzmax, l), np.linspace(0, pxmax, l), axes):
         counts = run_pe_circuit(phase, n, pauli_x=px, pauli_z=pz)
@@ -21,12 +21,14 @@ def pauli_plot_run(n, l, pzmax=0.08, pxmax=0, phase=None):
         x = np.ceil(-np.log10(t/tr))
         s = round((t/tr)*10**x)/10**x
         set_ticks(ax, s, t)
-        ax.plot(np.linspace(0, np.pi*2, 1000), np.ones(1000)*1/2**n+0.5, color="red",
+        ax.plot(np.linspace(0, np.pi*2, 1000), np.ones(1000)*1/2**n+0.5, color=colors["exp1"],
                 linestyle="dashed")
         plot_phase_counts(ax, hc, color=colors["exp"], width=0.1)
+        if pxmax != 0: ax.set_title("$p_x=%.3f$\n"%px)
+        if pzmax != 0: ax.set_title("$p_z=%.3f$\n"%pz)
 
-    plt.savefig("plots/simulations/se_pauli_n=%d_l=%d_pzmax=%.2f_pxmax=%.2f_phase=%.3f.pdf"%
-                (n ,l , pzmax, pxmax, phase), bbox_inches="tight")
+    plt.savefig("plots/se_pauli_n=%d_l=%d_pzmax=%.2f_pxmax=%.2f_phase=%.3f.pdf"%
+                (n ,l , pzmax, pxmax, phase), bbox_inches="tight", transparent=True)
 
 def run_various(ns, pmax=0.1, d="z", N=40):
     try:
@@ -66,6 +68,8 @@ def run_various(ns, pmax=0.1, d="z", N=40):
 
 
 if __name__ == "__main__":
-    for i in range(2**5):
-        pauli_plot_run(5, 5, pzmax=0, pxmax=0.05, phase=i*2**-5)
+    # for i in range(2**5):
+        # pauli_plot_run(5, 5, pzmax=0, pxmax=0.05, phase=i*2**-5)
     # run_various([2, 3, 4, 5], N=10)
+    pauli_plot_run(4, 3, pxmax=0, pzmax=0.05)
+    pauli_plot_run(4, 3, pxmax=0.05, pzmax=0)

@@ -1,0 +1,69 @@
+\usepackage{bm}
+
+\newlength{\hp}
+\newlength{\hs}
+\newlength{\vs}
+\newlength{\ls}
+\newlength{\ld}
+\newlength{\lo}
+\setlength{\hp}{5pt}
+\setlength{\hs}{0.8cm}
+\setlength{\vs}{1.1cm}
+\setlength{\ls}{0.2cm}
+\setlength{\ld}{1.2cm}
+\setlength{\lo}{-0.06cm}
+\renewcommand{\baselinestretch}{1.1}
+
+\newcommand{\hsep}{\\[\hp]\hrule\vspace{\hp}}
+\newcommand{\hhsep}{\\[\hp]\hrule\vspace{1pt}\hrule\vspace{2\hp}}
+
+
+\newcommand{\subone}[1]{\number\numexpr#1-1\relax}
+
+\newcommand{\getnode}[3]{
+    \ifthenelse{\not\equal{#1}{0}}{
+        \ifthenelse{\equal{#1}{1}}{
+            \node(Q#1)[block, above=\hs of Q\subone{#1}]{#2};
+        }{
+            \ifthenelse{\equal{#1}{9}}{
+                \node(Q#1)[block, below=\hs of Q\subone{#1}]{#2};
+            }{
+                \ifthenelse{#1>9}{
+                    \node(Q#1)[block, left=\vs of Q\subone{#1}]{#2};
+                }{
+                    \node(Q#1)[block, right=\vs of Q\subone{#1}]{#2};
+                }
+            }
+
+        }
+    }{
+        \node(Q#1)[block]{#2};
+    }
+}
+
+\newcommand{\qubit}[5]{
+    \getnode{#1}{$\bm{Q_{#1}}$\hsep #2\\#3\\#4\\#5};
+}
+
+
+\newcommand{\displaycxerror}[1]{$#1$}
+
+\tikzset{block/.style={
+    draw,
+    fill=white,
+    rectangle,
+    inner xsep=0pt,
+    inner ysep=\hp,
+    text width=1.1cm,
+    align=center,
+},
+myarrow/.style={
+    -latex,
+    shorten <= 2pt,
+    shorten >= 2pt
+},
+legend/.style={
+block,
+text width=2cm}
+}
+

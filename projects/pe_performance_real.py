@@ -16,7 +16,7 @@ def run_phase(f, t, N, n=2, a=0, backend="local_qiskit_simulator"):
         perc += [g]
     return x, np.array(perc)/100
 
-n=2
+n=1
 a = 0
 if n == 2:
     a = 0.25
@@ -39,8 +39,8 @@ ax.plot(*run_phase(a, 0.5, 10, n=n, backend="ibmqx5"), label="ibmqx5", marker="v
 ax.set_xlabel(r"$\varphi$")
 ax.set_ylabel("success rate")
 
-ax.set_title("PEA performance ibmqx5 %d qubit"%n+ ("s" if n == 2 else ""))
+ax.set_title("PEA performance $n = %d$"%n)
 
 ax.legend()
 # plt.plot(*run_phase(0.25, 0.5, 20, a=3))
-plt.savefig("plots/pe_performance_ibmqx5_n=%d.pdf"%n, bbox_inches="tight")
+plt.savefig("plots/pe_performance_ibmqx5_n=%d.pdf"%n, bbox_inches="tight", transparent=True)
