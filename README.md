@@ -1,1 +1,1 @@
-#IBM Quantum Experience - Bachelor Code
+# IBM Quantum Experience - Bachelor's Thesis Project
